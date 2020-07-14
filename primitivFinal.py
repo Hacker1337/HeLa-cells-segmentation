@@ -11,21 +11,21 @@ def bell(x, period, centre, maximum):
 def near(i, j):
     res = []
     for par in [(i+1, j), (i, j+1), (i-1, j), (i, j-1)]:
-        if 0 <= par[0] < field.shape[0] and 0 <= par[1] < field.shape[1]:
+        if 0 <= par[0] < data.shape[0] and 0 <= par[1] < data.shape[1]:
             res.append(par)
     return res
 
 
-def otherNum(i, j):
+def otherNum(i, j, diff):
     res = 0
     for ni, nj in near(i, j):
-        if not field[ni, nj]:
+        if data[ni, nj] >= - diff:
             res += 1
     return res
 
 
 def distance(cellN, i, j):
-    return ((cents[cellN-1][0] - j)**2 + (cents[cellN-1][1] - i)**2)/cells[cellN-1][1]
+    return ((cents[cellN-1][0] - j)**2 + (cents[cellN-1][1] - i)**2)/cells[cellN-1]
 
 
 pathes = [("slope/Easy", "primitivOutput/Easy"), ("slope/Medium", "primitivOutput/Medium")]
@@ -47,8 +47,7 @@ for dir, outdir in pathes:
             x = x[:-1]
             popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
             bordDiff = 2 * abs(popt[0])
-            centDiff = 1.65             # TODO вставить часть с частотным анализом
-            field = data < -centDiff        # TODO Надо удалить из тел функций
+            centDiff = 1.65
 
             c = 1
             used = np.zeros_like(data, dtype="int64")
@@ -56,22 +55,22 @@ for dir, outdir in pathes:
             cells = []  # периметр, площадь     # TODO убрать периметр
             cents = []  # j, i координаты центров
             borders = []  # массив с очертаниями центров клетки
-            "Нахождение больших центров"
-            for i in range(field.shape[0]):
-                for j in range(field.shape[1]):
+            "Нахождение больших кучностей клеток"
+            for i in range(data.shape[0]):
+                for j in range(data.shape[1]):
                     if data[i, j] < -centDiff and used[i, j] == 0:
                         borders.append([])
                         used[i, j] = c
                         queue = [(i, j)]
-                        cells.append([0, 0])
+                        cells.append(0)
                         cents.append([0, 0])
                         x = 0
                         while x < len(queue):
                             cents[-1][0] += queue[x][1]
                             cents[-1][1] += queue[x][0]
-                            if otherNum(*queue[x]) > 0:  # клетка на границе
+                            if otherNum(*queue[x], centDiff) > 0:  # клетка на границе
                                 borders[-1].append(queue[x])
-                            cells[-1][1] += 1
+                            cells[-1] += 1
                             for nei in near(*queue[x]):
                                 if data[nei[0], nei[1]] < -centDiff and used[nei[0], nei[1]] != c:
                                     if used[nei[0], nei[1]] != 0:
@@ -81,14 +80,14 @@ for dir, outdir in pathes:
                                     queue.append(nei)
                             x += 1
 
-                        if cells[-1][1] < minSpace:
+                        if cells[-1] < minSpace:
                             used[used == c] = 0
                             borders.pop()
                             cells.pop()
                             cents.pop()
                         else:
-                            cents[-1][0] /= cells[-1][1]
-                            cents[-1][1] /= cells[-1][1]
+                            cents[-1][0] /= cells[-1]
+                            cents[-1][1] /= cells[-1]
                             c += 1
 
 
@@ -98,7 +97,7 @@ for dir, outdir in pathes:
             # plt.suptitle(name)
             # plt.pcolormesh(used > 0)
             # for i in range(len(cents)):
-            #     plt.text(*cents[i], str(cells[i][1]), {'color':'w'})
+            #     plt.text(*cents[i], str(cells[i]), {'color':'w'})
             # plt.savefig(os.path.join(outdir, f'spaces{name}diff={centDiff}.png'), dpi=300)
             # plt.show()
             # plt.close()
@@ -129,21 +128,21 @@ for dir, outdir in pathes:
             plt.subplots()
             plt.pcolormesh(used)
             plt.title(name)
-            plt.savefig(os.path.join(outdir, f'{name}coloringExp.png'), dpi=300)
+            # plt.savefig(os.path.join(outdir, f'{name}coloringAnal.png'), dpi=300)
             plt.show()
             plt.close()
 
-            outPlace = os.path.join(outdir, name)
-            if not os.path.exists(outPlace):
-                os.makedirs(outPlace)
-            for cell in range(c-1):
-                if cells[cell][1] >= minSpace:
-                    output = data*(used == cell+1)
-                    np.savetxt(os.path.join(outPlace, f'cell{cell}.txt'), output)
-                    fig, ax = plt.subplots()
-                    ax.pcolormesh(output)
-                    ax.set_title(f"{cells[cell]} {cells[cell][0]**2/cells[cell][1]}")
-                    plt.savefig(os.path.join(outPlace, f'im{cell}.png'), dpi=100)
-                    plt.close(fig)
+            # outPlace = os.path.join(outdir, name)
+            # if not os.path.exists(outPlace):
+            #     os.makedirs(outPlace)
+            # for cell in range(c-1):
+            #     if cells[cell] >= minSpace:
+            #         output = data*(used == cell+1)
+            #         np.savetxt(os.path.join(outPlace, f'cell{cell}.txt'), output)
+            #         fig, ax = plt.subplots()
+            #         ax.pcolormesh(output)
+            #         ax.set_title(f"{cells[cell]}")
+            #         plt.savefig(os.path.join(outPlace, f'im{cell}.png'), dpi=100)
+            #         plt.close(fig)
 
 
