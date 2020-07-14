@@ -28,10 +28,24 @@ def distance(cellN, i, j):
     return ((cents[cellN-1][0] - j)**2 + (cents[cellN-1][1] - i)**2)/cells[cellN-1]
 
 
-pathes = [("slope/Easy", "primitivOutput/Easy"), ("slope/Medium", "primitivOutput/Medium")]
+def flat(x, a, b, c):
+    return x[1]*a + x[0]*b + c
+
+
+def untilt(massive, ground, error):
+    mask = np.abs(massive - ground) < error
+    XY = np.array(np.where(mask))
+    Z = data[mask]
+    popt, pcov = curve_fit(flat, XY, Z, p0=[0.01, 0.01, 1])
+    return massive - flat(np.array([np.arange(data.shape[0]).reshape(-1, 1), np.arange(data.shape[1]).reshape(1, -1)]), *popt)
+
+
+pathes = [("cellsEasy", "result/Easy"), ("cellsMedium", "result/Medium")]
 minSpaceWithBorders = 800
 minSpaceCentre = 200
 minSpace = 500
+createPictures = True
+
 
 for dir, outdir in pathes:
     print("New path:", dir)
@@ -40,16 +54,32 @@ for dir, outdir in pathes:
     files = os.listdir(dir)
 
     for f in files:
-        if f[-4:] == '.txt' and f[:8] == "untilted":
-            name = f[8:-4]
+        if f[-4:] == '.txt':
+            name = f[:-4]
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
             popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
-            bordDiff = -2 * np.sqrt(2) * abs(popt[0])
-            # centDiff = -1.65
 
+            counter = 0
+            while counter == 0 or (counter < 6 and abs(popt[0]) > 0.2):
+                # print("Step", counter, 'popt', popt)
+                data = untilt(data, popt[0], abs(popt[1])*3)
+                y, x = np.histogram(data.ravel(), bins=500)
+                x = x[:-1]
+                popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+                counter += 1
+
+            # print("Step", counter, 'popt', popt)
+            # plt.hist(data.ravel(), bins=300)
+            # plt.plot(x, bell(x, *popt))
+            # plt.show()
+            # np.savetxt(f'{name}untilted.txt', data)
+            # plt.close()
+
+
+            bordDiff = max(-3.5 * abs(popt[0]) + popt[1], -1)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -66,8 +96,6 @@ for dir, outdir in pathes:
                         cents.append([0, 0])
                         x = 0
                         while x < len(queue):
-                            cents[-1][0] += queue[x][1]
-                            cents[-1][1] += queue[x][0]
 
                             cells[-1] += 1
                             for nei in near(*queue[x]):
@@ -90,7 +118,7 @@ for dir, outdir in pathes:
                         y, x = np.histogram(data[used == c], bins=500)
 
                         x = x[:-1]
-                        halfSum = y.sum()/4     # не верить названиям переменных
+                        halfSum = y.sum()/3     # не верить названиям переменных
                         k = 0
                         sum = 0
                         while sum < halfSum:
@@ -166,25 +194,27 @@ for dir, outdir in pathes:
 
             # ToDo убрать маленькие клетки
 
-            np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
-            plt.subplots()
-            plt.pcolormesh(used)
-            plt.title(name)
-            plt.savefig(os.path.join(outdir, f'{name}coloringAnalDeep.png'), dpi=300)
-            plt.show()
-            plt.close()
+            # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
+            if createPictures:
+                plt.subplots()
+                plt.pcolormesh(used)
+                plt.title(name)
+                plt.savefig(os.path.join(outdir, f'{name}coloring.png'), dpi=300)
+                # plt.show()
+                plt.close()
 
-            # outPlace = os.path.join(outdir, name)
-            # if not os.path.exists(outPlace):
-            #     os.makedirs(outPlace)
-            # for cell in range(c-1):
-            #     if cells[cell] >= minSpaceWithBorders:
-            #         output = data*(used == cell+1)
-            #         np.savetxt(os.path.join(outPlace, f'cell{cell}.txt'), output)
-            #         fig, ax = plt.subplots()
-            #         ax.pcolormesh(output)
-            #         ax.set_title(f"{cells[cell]}")
-            #         plt.savefig(os.path.join(outPlace, f'im{cell}.png'), dpi=100)
-            #         plt.close(fig)
+            outPlace = os.path.join(outdir, name)
+            if not os.path.exists(outPlace):
+                os.makedirs(outPlace)
+            for cell in range(c-1):
+                if cells[cell] >= minSpaceWithBorders:
+                    output = data*(used == cell+1)
+                    np.savetxt(os.path.join(outPlace, f'cell{cell}.txt'), output)
+                    if createPictures:
+                        fig, ax = plt.subplots()
+                        ax.pcolormesh(output)
+                        # ax.set_title(f"{cells[cell]}")
+                        plt.savefig(os.path.join(outPlace, f'im{cell}.png'), dpi=100)
+                        plt.close(fig)
 
 
