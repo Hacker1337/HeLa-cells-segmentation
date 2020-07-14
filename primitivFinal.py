@@ -1,6 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from scipy.optimize import curve_fit
+
+
+def bell(x, period, centre, maximum):
+    return maximum*(np.exp(-((x - centre) / period) ** 2))
 
 
 def near(i, j):
@@ -23,7 +28,7 @@ def distance(cellN, i, j):
     return ((cents[cellN-1][0] - j)**2 + (cents[cellN-1][1] - i)**2)/cells[cellN-1][1]
 
 
-pathes = [("slope", "primitivOutput/Easy"), ("slopeMedium", "primitivOutput/Medium")]
+pathes = [("slope/Easy", "primitivOutput/Easy"), ("slope/Medium", "primitivOutput/Medium")]
 minSpace = 500
 
 for dir, outdir in pathes:
@@ -33,12 +38,16 @@ for dir, outdir in pathes:
     files = os.listdir(dir)
 
     for f in files:
-        if f[-7:] == '1.2.txt' and f[:8] == "untilted":
+        if f[-4:] == '.txt' and f[:8] == "untilted":
             name = f[8:-4]
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
+            y, x, _ = plt.hist(data.ravel(), bins=500)
+            plt.close()
+            x = x[:-1]
+            popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+            bordDiff = 2 * abs(popt[0])
             centDiff = 1.65             # TODO вставить часть с частотным анализом
-            bordDiff = 0.8
             field = data < -centDiff        # TODO Надо удалить из тел функций
 
             c = 1
