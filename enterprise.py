@@ -40,10 +40,9 @@ def untilt(massive, ground, error):
     return massive - flat(np.array([np.arange(data.shape[0]).reshape(-1, 1), np.arange(data.shape[1]).reshape(1, -1)]), *popt)
 
 
-pathes = [("cellsEasy", "result/Easy"), ("cellsMedium", "result/Medium")]
-minSpaceWithBorders = 800
-minSpaceCentre = 200
-minSpace = 500
+pathes = [("cellsEasy", "result/Easy"), ("cellsMedium", "result/Medium")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+minSpaceWithBorders = 1000
+minSpaceCentre = 1000
 createPictures = True
 
 
@@ -63,7 +62,7 @@ for dir, outdir in pathes:
             popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
 
             counter = 0
-            while counter == 0 or (counter < 6 and abs(popt[0]) > 0.2):
+            while counter == 0 or (counter < 6 and abs(popt[0]) > 0.26):
                 # print("Step", counter, 'popt', popt)
                 data = untilt(data, popt[0], abs(popt[1])*3)
                 y, x = np.histogram(data.ravel(), bins=500)
@@ -72,18 +71,13 @@ for dir, outdir in pathes:
                 counter += 1
 
             # print("Step", counter, 'popt', popt)
-            # plt.hist(data.ravel(), bins=300)
-            # plt.plot(x, bell(x, *popt))
-            # plt.show()
-            # np.savetxt(f'{name}untilted.txt', data)
-            # plt.close()
 
 
-            bordDiff = max(-3.5 * abs(popt[0]) + popt[1], -1)
+            bordDiff = max(-3 * abs(popt[0]) + popt[1] - 0.3, -1)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
-            cells = []  #  площадь
+            cells = []  # площадь
             cents = []  # j, i координаты центров
             # borders = []  # массив с очертаниями центров клетки
             "Нахождение больших кучностей клеток"
@@ -169,27 +163,14 @@ for dir, outdir in pathes:
                             while x < len(queue):
                                 for nei in near(*queue[x]):
                                     if data[nei[0], nei[1]] < bordDiff and used[nei[0], nei[1]] != subc:
-                                        if used[nei[0], nei[1]] != 0 and \
-                                                distance(used[nei[0], nei[1]], nei[0], nei[1]) < distance(subc, nei[0], nei[1]) \
-                                                and data[nei[0], nei[1]] > centDiff:
+                                        if (used[nei[0], nei[1]] != 0 and
+                                                distance(used[nei[0], nei[1]], nei[0], nei[1]) < distance(subc, nei[0], nei[1])):
                                             continue
 
                                         used[nei[0], nei[1]] = subc
                                         queue.append(nei)
                                 x += 1
 
-
-
-
-            # "Вывод площадей"
-            # plt.figure()
-            # plt.suptitle(name)
-            # plt.pcolormesh(used > 0)
-            # for i in range(len(cents)):
-            #     plt.text(*cents[i], str(cells[i]), {'color':'w'})
-            # plt.savefig(os.path.join(outdir, f'spaces{name}diff={centDiff}.png'), dpi=300)
-            # plt.show()
-            # plt.close()
 
 
             # ToDo убрать маленькие клетки
@@ -199,7 +180,7 @@ for dir, outdir in pathes:
                 plt.subplots()
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloring1.png'), dpi=300)
                 # plt.show()
                 plt.close()
 
