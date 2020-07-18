@@ -101,7 +101,7 @@ for dir, outdir in pathes:
                                     queue.append(nei)
                             x += 1
 
-                        if cells[-1] < minSpaceWithBorders:
+                        if cells[-1] < minSpaceCentre*3:
                             # used[used == c] = 0
                             # borders.pop()
                             c += 1
@@ -147,7 +147,7 @@ for dir, outdir in pathes:
                                     x += 1
 
                                 if cells[-1] < minSpaceCentre:
-                                    used[used == c] = 0
+                                    used[used == c] = -1
                                     borders.pop()
                                     cells.pop()
                                     cents.pop()
@@ -155,6 +155,7 @@ for dir, outdir in pathes:
                                     cents[-1][0] /= cells[-1]
                                     cents[-1][1] /= cells[-1]
                                     c += 1
+                        used[used == -1] = 0
                         "Расширение границ центров из кучи"
                         for k in range(len(borders)):
                             subc = k + c - len(borders)
