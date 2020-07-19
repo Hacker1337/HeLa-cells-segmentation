@@ -62,9 +62,9 @@ for dir, outdir in pathes:
             popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
 
             counter = 0
-            while counter == 0 or (counter < 6 and abs(popt[0]) > 0.26):
+            while counter == 0 or (counter < 6):
                 # print("Step", counter, 'popt', popt)
-                data = untilt(data, popt[0], abs(popt[1])*3)
+                data = untilt(data, popt[0], abs(popt[1])*2 + 0.3)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
@@ -87,7 +87,6 @@ for dir, outdir in pathes:
                         used[i, j] = c
                         queue = [(i, j)]
                         cells.append(0)
-                        cents.append([0, 0])
                         x = 0
                         while x < len(queue):
 
@@ -102,12 +101,10 @@ for dir, outdir in pathes:
                             x += 1
 
                         if cells[-1] < minSpaceCentre*3:
-                            # used[used == c] = 0
-                            # borders.pop()
-                            c += 1
+                            used[used == c] = -1
+                            cells.pop()
                             continue
                         cells.pop()
-                        cents.pop()
 
                         y, x = np.histogram(data[used == c], bins=500)
 
@@ -174,14 +171,14 @@ for dir, outdir in pathes:
 
 
 
-            # ToDo убрать маленькие клетки
+            used[used == -1] = 0
 
             # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
             if createPictures:
                 plt.subplots()
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring1.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloring2.png'), dpi=300)
                 # plt.show()
                 plt.close()
 
