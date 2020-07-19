@@ -168,6 +168,10 @@ for dir, outdir in pathes:
                                         used[nei[0], nei[1]] = subc
                                         queue.append(nei)
                                 x += 1
+                        if len(borders) == 0:
+                            for I, J in queue:
+                                used[I, J] = -1
+
 
 
 
