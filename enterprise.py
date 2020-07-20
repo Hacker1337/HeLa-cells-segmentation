@@ -177,6 +177,38 @@ for dir, outdir in pathes:
 
             used[used == -1] = 0
 
+
+
+            "Возвращение отрезанных кусков"
+            pieces = []     # [cell number, queue, set(neibours)]
+            merged = np.zeros_like(used, dtype=bool)
+            for i in range(data.shape[0]):
+                for j in range(data.shape[1]):
+                    if used[i, j] and not merged[i, j]:
+                        merged[i, j] = True
+                        queue = [(i, j)]
+                        pieces.append([used[i, j], [], set()])       # [cell number, queue, set(neibours)]
+                        x = 0
+                        while x < len(queue):
+
+                            for nei in near(*queue[x]):
+                                if used[nei[0], nei[1]] == pieces[-1][0]:
+                                    if not merged[nei[0], nei[1]]:
+                                        merged[nei[0], nei[1]] = True
+                                        queue.append(nei)
+                                elif used[nei[0], nei[1]] != 0:
+
+                                    pieces[-1][-1].add(used[nei[0], nei[1]])
+                            x += 1
+                        pieces[-1][1] = queue
+            pieces.sort(key=lambda x: len(x[1]), reverse=True)
+            pieces.sort(key=lambda x: x[0])
+            for k in range(1, len(pieces)):
+                if pieces[k][0] == pieces[k - 1][0]:
+                    new = 0 if len(pieces[k][-1]) == 0 else pieces[k][-1].pop()
+                    for i, j in pieces[k][1]:
+                        used[i, j] = new
+
             # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
             if createPictures:
                 plt.subplots()
