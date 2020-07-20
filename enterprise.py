@@ -8,17 +8,17 @@ def bell(x, period, centre, maximum):
     return maximum*(np.exp(-((x - centre) / period) ** 2))
 
 
-def near(i, j):
+def near(i, j, ilim, jlim):
     res = []
     for par in [(i+1, j), (i, j+1), (i-1, j), (i, j-1)]:
-        if 0 <= par[0] < data.shape[0] and 0 <= par[1] < data.shape[1]:
+        if 0 <= par[0] < ilim and 0 <= par[1] < jlim:
             res.append(par)
     return res
 
 
-def otherNum(i, j, diff):
+def otherNum(i, j, diff, ilim, jlim):
     res = 0
-    for ni, nj in near(i, j):
+    for ni, nj in near(i, j, ilim, jlim):
         if data[ni, nj] >= diff:
             res += 1
     return res
@@ -91,7 +91,7 @@ for dir, outdir in pathes:
                         while x < len(queue):
 
                             cells[-1] += 1
-                            for nei in near(*queue[x]):
+                            for nei in near(*queue[x], data.shape[0], data.shape[1]):
                                 if data[nei[0], nei[1]] < bordDiff and used[nei[0], nei[1]] != c:
                                     if used[nei[0], nei[1]] != 0:
                                         print("Я сломался", nei[0], nei[1])
@@ -131,10 +131,10 @@ for dir, outdir in pathes:
                                 while x < len(subqueue):
                                     cents[-1][0] += subqueue[x][1]
                                     cents[-1][1] += subqueue[x][0]
-                                    if otherNum(*subqueue[x], centDiff) > 0:  # клетка на границе
+                                    if otherNum(*subqueue[x], centDiff, *data.shape) > 0:  # клетка на границе
                                         borders[-1].append(subqueue[x])
                                     cells[-1] += 1
-                                    for nei in near(*subqueue[x]):
+                                    for nei in near(*subqueue[x], *data.shape):
                                         if data[nei[0], nei[1]] < centDiff and used[nei[0], nei[1]] != c:
                                             if used[nei[0], nei[1]] != 0:
                                                 print("Я сломался", nei[0], nei[1])
@@ -159,7 +159,7 @@ for dir, outdir in pathes:
                             queue = borders[k]
                             x = 0
                             while x < len(queue):
-                                for nei in near(*queue[x]):
+                                for nei in near(*queue[x], *data.shape):
                                     if data[nei[0], nei[1]] < bordDiff and used[nei[0], nei[1]] != subc:
                                         if (used[nei[0], nei[1]] != 0 and
                                                 distance(used[nei[0], nei[1]], nei[0], nei[1]) < distance(subc, nei[0], nei[1])):
@@ -172,12 +172,7 @@ for dir, outdir in pathes:
                             for I, J in queue:
                                 used[I, J] = -1
 
-
-
-
             used[used == -1] = 0
-
-
 
             "Возвращение отрезанных кусков"
             pieces = []     # [cell number, queue, set(neibours)]
@@ -191,7 +186,7 @@ for dir, outdir in pathes:
                         x = 0
                         while x < len(queue):
 
-                            for nei in near(*queue[x]):
+                            for nei in near(*queue[x], *data.shape):
                                 if used[nei[0], nei[1]] == pieces[-1][0]:
                                     if not merged[nei[0], nei[1]]:
                                         merged[nei[0], nei[1]] = True
@@ -214,22 +209,39 @@ for dir, outdir in pathes:
                 plt.subplots()
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring2.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloring3.png'), dpi=300)
                 # plt.show()
                 plt.close()
 
+            "Выделение рамок для клеток и их печать"
             outPlace = os.path.join(outdir, name)
             if not os.path.exists(outPlace):
                 os.makedirs(outPlace)
+
             for cell in range(c-1):
-                if cells[cell] >= minSpaceWithBorders:
-                    output = data*(used == cell+1)
-                    np.savetxt(os.path.join(outPlace, f'cell{cell}.txt'), output)
-                    if createPictures:
-                        fig, ax = plt.subplots()
-                        ax.pcolormesh(output)
-                        # ax.set_title(f"{cells[cell]}")
-                        plt.savefig(os.path.join(outPlace, f'im{cell}.png'), dpi=100)
-                        plt.close(fig)
+                maski, maskj = np.where(used == cell+1)
+                imin, imax = maski.min(), maski.max()
+                jmin, jmax = maskj.min(), maskj.max()
+                if imin == 0 or jmin == 0 or imax == used.shape[0] - 1 or jmax == used.shape[1] - 1:
+                    # клетка около границы
+                    continue
+                map = used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1
+                queue = [(0, 0)]
+
+                x = 0
+                while x < len(queue):
+                    map[0, 0] = True
+                    for nei in near(*queue[x], *map.shape):
+                        if map[nei[0], nei[1]] == False:
+                            map[nei[0], nei[1]] = True
+                            queue.append(nei)
+                    x += 1
+                map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
+                output = data[imin-1: imax+2, jmin-1:jmax+2]*map
+                np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
+                if createPictures:
+                    plt.pcolormesh(output)
+                    plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
+                    plt.close()
 
 
