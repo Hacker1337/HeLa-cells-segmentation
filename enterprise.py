@@ -40,7 +40,7 @@ def untilt(massive, ground, error):
     return massive - flat(np.array([np.arange(data.shape[0]).reshape(-1, 1), np.arange(data.shape[1]).reshape(1, -1)]), *popt)
 
 
-pathes = [("cellsEasy", "result/Easy"), ("cellsMedium", "result/Medium")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [("cells Segmentation HeLa", "resultHuge/Many")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -73,7 +73,7 @@ for dir, outdir in pathes:
             # print("Step", counter, 'popt', popt)
 
 
-            bordDiff = max(-3 * abs(popt[0]) + popt[1] - 0.3, -1)
+            bordDiff = max(-3 * abs(popt[0]) + popt[1], -1)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -92,11 +92,11 @@ for dir, outdir in pathes:
 
                             cells[-1] += 1
                             for nei in near(*queue[x], data.shape[0], data.shape[1]):
-                                if data[nei[0], nei[1]] < bordDiff and used[nei[0], nei[1]] != c:
-                                    if used[nei[0], nei[1]] != 0:
-                                        print("Я сломался", nei[0], nei[1])
+                                if data[nei] < bordDiff and used[nei] != c:
+                                    if used[nei] != 0:
+                                        print("Я сломался", nei)
                                         # exit(1)
-                                    used[nei[0], nei[1]] = c
+                                    used[nei] = c
                                     queue.append(nei)
                             x += 1
 
@@ -135,11 +135,11 @@ for dir, outdir in pathes:
                                         borders[-1].append(subqueue[x])
                                     cells[-1] += 1
                                     for nei in near(*subqueue[x], *data.shape):
-                                        if data[nei[0], nei[1]] < centDiff and used[nei[0], nei[1]] != c:
-                                            if used[nei[0], nei[1]] != 0:
-                                                print("Я сломался", nei[0], nei[1])
+                                        if data[nei] < centDiff and used[nei] != c:
+                                            if used[nei] != 0:
+                                                print("Я сломался", nei)
                                                 # exit(1)
-                                            used[nei[0], nei[1]] = c
+                                            used[nei] = c
                                             subqueue.append(nei)
                                     x += 1
 
@@ -160,12 +160,12 @@ for dir, outdir in pathes:
                             x = 0
                             while x < len(queue):
                                 for nei in near(*queue[x], *data.shape):
-                                    if data[nei[0], nei[1]] < bordDiff and used[nei[0], nei[1]] != subc:
-                                        if (used[nei[0], nei[1]] != 0 and
-                                                distance(used[nei[0], nei[1]], nei[0], nei[1]) < distance(subc, nei[0], nei[1])):
+                                    if data[nei] < bordDiff and used[nei] != subc:
+                                        if (used[nei] != 0 and
+                                                distance(used[nei], *nei) < distance(subc, *nei)):
                                             continue
 
-                                        used[nei[0], nei[1]] = subc
+                                        used[nei] = subc
                                         queue.append(nei)
                                 x += 1
                         if len(borders) == 0:
@@ -187,13 +187,13 @@ for dir, outdir in pathes:
                         while x < len(queue):
 
                             for nei in near(*queue[x], *data.shape):
-                                if used[nei[0], nei[1]] == pieces[-1][0]:
-                                    if not merged[nei[0], nei[1]]:
-                                        merged[nei[0], nei[1]] = True
+                                if used[nei] == pieces[-1][0]:
+                                    if not merged[nei]:
+                                        merged[nei] = True
                                         queue.append(nei)
-                                elif used[nei[0], nei[1]] != 0:
+                                elif used[nei] != 0:
 
-                                    pieces[-1][-1].add(used[nei[0], nei[1]])
+                                    pieces[-1][-1].add(used[nei])
                             x += 1
                         pieces[-1][1] = queue
             pieces.sort(key=lambda x: len(x[1]), reverse=True)
@@ -232,8 +232,8 @@ for dir, outdir in pathes:
                 while x < len(queue):
                     map[0, 0] = True
                     for nei in near(*queue[x], *map.shape):
-                        if map[nei[0], nei[1]] == False:
-                            map[nei[0], nei[1]] = True
+                        if map[nei] == False:
+                            map[nei] = True
                             queue.append(nei)
                     x += 1
                 map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
