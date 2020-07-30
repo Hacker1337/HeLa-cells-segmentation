@@ -2,6 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from scipy.optimize import curve_fit
+from natsort import natsorted
+
+
+def bellFixed(x, period):
+    return np.exp(-(x / period) ** 2)
 
 
 def bell(x, period, centre, maximum):
@@ -35,12 +40,12 @@ def flat(x, a, b, c):
 def untilt(massive, ground, error):
     mask = np.abs(massive - ground) < error
     XY = np.array(np.where(mask))
-    Z = data[mask]
+    Z = massive[mask]
     popt, pcov = curve_fit(flat, XY, Z, p0=[0.01, 0.01, 1])
-    return massive - flat(np.array([np.arange(data.shape[0]).reshape(-1, 1), np.arange(data.shape[1]).reshape(1, -1)]), *popt)
+    return massive - flat(np.array([np.arange(massive.shape[0]).reshape(-1, 1), np.arange(massive.shape[1]).reshape(1, -1)]), *popt)
 
 
-pathes = [("cells Segmentation HeLa", "resultHuge/Many")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [("cells Segmentation HeLa", "resultNewUnt/Many")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -52,28 +57,35 @@ for dir, outdir in pathes:
         os.makedirs(outdir)
     files = os.listdir(dir)
 
-    for f in files:
+    for f in natsorted(files):
         if f[-4:] == '.txt':
             name = f[:-4]
             print("Working with file", f)
-            data = np.loadtxt(os.path.join(dir, f))
+            data = untilt(np.loadtxt(os.path.join(dir, f)), 0, 100)
+
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
-            popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
 
+            y = y / y.max()
+            centerVal = x[y.argmax()]
+            x = x - centerVal
+            popt, pcov = curve_fit(bellFixed, x, y)
+            error = abs(popt[0])*1.9 + 0.14
             counter = 0
-            while counter == 0 or (counter < 6):
+            while counter == 0 or (counter < 3):
                 # print("Step", counter, 'popt', popt)
-                data = untilt(data, popt[0], abs(popt[1])*2 + 0.3)
+                data = untilt(data, centerVal, abs(popt[0])*1.9 + 0.14)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
-                popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+                y = y / y.max()
+                centerVal = x[y.argmax()]
+                x = x - centerVal
+                popt, pcov = curve_fit(bellFixed, x, y)
                 counter += 1
 
             # print("Step", counter, 'popt', popt)
 
-
-            bordDiff = max(-3 * abs(popt[0]) + popt[1], -1)
+            bordDiff = max(-3 * abs(popt[0]) + centerVal, -1)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
