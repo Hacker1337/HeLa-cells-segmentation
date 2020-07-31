@@ -45,7 +45,7 @@ def untilt(massive, ground, error):
     return massive - flat(np.array([np.arange(massive.shape[0]).reshape(-1, 1), np.arange(massive.shape[1]).reshape(1, -1)]), *popt)
 
 
-pathes = [("cells Segmentation HeLa", "resultNewUnt/Many")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [("Fixed Cells", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -61,7 +61,9 @@ for dir, outdir in pathes:
         if f[-4:] == '.txt':
             name = f[:-4]
             print("Working with file", f)
-            data = untilt(np.loadtxt(os.path.join(dir, f)), 0, 100)
+            data = np.loadtxt(os.path.join(dir, f))
+            data[np.isnan(data)] = 0
+            data = untilt(data, 0, 100)
 
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
@@ -218,7 +220,6 @@ for dir, outdir in pathes:
 
             # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
             if createPictures:
-                plt.subplots()
                 plt.pcolormesh(used)
                 plt.title(name)
                 plt.savefig(os.path.join(outdir, f'{name}coloring3.png'), dpi=300)
