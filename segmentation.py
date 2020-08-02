@@ -42,7 +42,7 @@ def untilt(massive, ground, error):
     XY = np.array(np.where(mask))
     Z = massive[mask]
     popt, pcov = curve_fit(flat, XY, Z, p0=[0.01, 0.01, 1])
-    return massive - flat(np.array([np.arange(massive.shape[0]).reshape(-1, 1), np.arange(massive.shape[1]).reshape(1, -1)]), *popt)
+    return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
 pathes = [("Fixed Cells", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
