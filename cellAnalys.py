@@ -2,20 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+from natsort import natsorted
+from scipy.optimize import curve_fit
 
 
-# pathes = [("result/Easy", "analys/Easy"), (
-#     "result/Medium", "analys/Medium")]  # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
-# pathes = [('result/Many', "analys/Many"), ("result/Easy", "analys/Easy"), ( "result/Medium", "analys/Medium")]
-# pathes = [('result/Many', "analys/Many")]
-pathes = [('resultHuge/Many', "analysHuge/Many")]
+def bell(x, period, centre, maximum):
+    return maximum*(np.exp(-((x - centre) / period) ** 2))
+
+
+# Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [('result/apoptose', "analys/apoptose")]
 
 # createPictures = True
 
 alpha = 0.19  # in mkm^3/pg == ml/g
 pixelSize = 0.165  # in mkm
-backN = 1.336
-cellN = 1.35
+backN = 1.4729      # refractive index
 waveLen = 0.6328    # in micrometers
 vaim = 2425         # in mkm^3
 
@@ -25,7 +27,7 @@ for dir, outdir in pathes:
         os.makedirs(outdir)
     files = os.listdir(dir)
     M, avSurfDens, avPhaseProfile, vol, realV, S, SA, SAV, SDM, PAR, ψ, σ, Kurtosis, Skewness, ε, name = ([] for i in range(16))
-    for f in files:
+    for f in natsorted(files):
         if f.count('.') != 0:
             continue
         cellsdir = os.path.join(dir, f)
@@ -78,6 +80,9 @@ for dir, outdir in pathes:
 
     deltaN = sum(vol)/len(vol)/vaim
     print("\ncells refractive index =", backN + deltaN)
+    f = open("refractiveIndex.txt", "wa")
+    print(dir + " cells refractive index =", backN + deltaN, file=f)
+    f.close()
     realV = [x/deltaN for x in vol]
     output = pd.DataFrame(
         {"M, pg": M, "av surface density, pg/mkm^2": avSurfDens, "av phase profile, rad": avPhaseProfile,
@@ -85,16 +90,20 @@ for dir, outdir in pathes:
          "σ, mkm^2": σ, "Kurtosis": Kurtosis, "Skewness": Skewness, "ε": ε, "name": name})
     output.to_csv(os.path.join(outdir, "table1.csv"))
 
-    for col in output:
-        if output[col].dtype != 'O':
-            av = abs(output[col].mean())
-            output = output[abs(output[col]) < 5*av]
+    # for col in output:
+    #     if output[col].dtype != 'O':
+    #         y, x = np.histogram(output[col], bins=500)
+    #         x = x[:-1]
+    #         popt, conv = curve_fit(bell, x, y,
+    #                                p0=[output[col].mean(), output[col].mean() if col != 'Kurtosis' else 0, y.max()])
+    #         output = output[abs(output[col] - popt[1]) < abs(popt[0]) * 4]
+    # output.to_csv(os.path.join(dir, "tableFiltered.csv"))
 
     output.hist(bins=50, figsize=(15, 15))
     plt.savefig(os.path.join(outdir, 'hists.png'), dpi=400)
     plt.close()
-    pd.plotting.scatter_matrix(output, figsize=(50, 50))
-    plt.savefig(os.path.join(dir, 'scatter.png'), dpi=300)
-    plt.close()
+    # pd.plotting.scatter_matrix(output, figsize=(50, 50))
+    # plt.savefig(os.path.join(outdir, 'scatter.png'), dpi=300)
+    # plt.close()
 
 
