@@ -21,6 +21,8 @@ backN = 1.4729      # refractive index
 waveLen = 0.6328    # in micrometers
 vaim = 2425         # in mkm^3
 
+apoptose = True
+
 for dir, outdir in pathes:
     print("\nNew path:", dir, end=' ')
     if not os.path.exists(outdir):
