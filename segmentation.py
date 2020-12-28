@@ -45,7 +45,8 @@ def untilt(massive, ground, error):
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
-pathes = [("Fixed Cells", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+
+pathes = [("data/foto/1_1 А контроль АЛА 75мВт", "result/foto/1_1 А контроль АЛА 75мВт")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -63,16 +64,11 @@ for dir, outdir in pathes:
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
-            data = untilt(data, 0, 100)
 
+            ##
+            data = untilt(data, 0, 100)
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
-
-            y = y / y.max()
-            centerVal = x[y.argmax()]
-            x = x - centerVal
-            popt, pcov = curve_fit(bellFixed, x, y)
-            error = abs(popt[0])*1.9 + 0.14
             counter = 0
             while counter == 0 or (counter < 3):
                 # print("Step", counter, 'popt', popt)
@@ -84,10 +80,24 @@ for dir, outdir in pathes:
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
                 counter += 1
-
             # print("Step", counter, 'popt', popt)
-
             bordDiff = max(-3 * abs(popt[0]) + centerVal, -1)
+            ##
+            y, x = np.histogram(data.ravel(), bins=500)
+            x = x[:-1]
+            popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+
+            counter = 0
+            while counter == 0 or (counter < 6):
+                # print("Step", counter, 'popt', popt)
+                data = untilt(data, popt[0], abs(popt[1]) * 2 + 0.3)
+                y, x = np.histogram(data.ravel(), bins=500)
+                x = x[:-1]
+                popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+                counter += 1
+            # print("Step", counter, 'popt', popt)
+            bordDiff = max(-3 * abs(popt[0]) + popt[1], -1)
+            ##
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -222,39 +232,39 @@ for dir, outdir in pathes:
             if createPictures:
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring3.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloringOldRev.png'), dpi=300)
                 # plt.show()
                 plt.close()
 
             "Выделение рамок для клеток и их печать"
-            outPlace = os.path.join(outdir, name)
-            if not os.path.exists(outPlace):
-                os.makedirs(outPlace)
-
-            for cell in range(c-1):
-                maski, maskj = np.where(used == cell+1)
-                imin, imax = maski.min(), maski.max()
-                jmin, jmax = maskj.min(), maskj.max()
-                if imin == 0 or jmin == 0 or imax == used.shape[0] - 1 or jmax == used.shape[1] - 1:
-                    # клетка около границы
-                    continue
-                map = used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1
-                queue = [(0, 0)]
-
-                x = 0
-                while x < len(queue):
-                    map[0, 0] = True
-                    for nei in near(*queue[x], *map.shape):
-                        if map[nei] == False:
-                            map[nei] = True
-                            queue.append(nei)
-                    x += 1
-                map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
-                output = data[imin-1: imax+2, jmin-1:jmax+2]*map
-                np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
-                if createPictures:
-                    plt.pcolormesh(output)
-                    plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
-                    plt.close()
+            # outPlace = os.path.join(outdir, name)
+            # if not os.path.exists(outPlace):
+            #     os.makedirs(outPlace)
+            #
+            # for cell in range(c-1):
+            #     maski, maskj = np.where(used == cell+1)
+            #     imin, imax = maski.min(), maski.max()
+            #     jmin, jmax = maskj.min(), maskj.max()
+            #     if imin == 0 or jmin == 0 or imax == used.shape[0] - 1 or jmax == used.shape[1] - 1:
+            #         # клетка около границы
+            #         continue
+            #     map = used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1
+            #     queue = [(0, 0)]
+            #
+            #     x = 0
+            #     while x < len(queue):
+            #         map[0, 0] = True
+            #         for nei in near(*queue[x], *map.shape):
+            #             if map[nei] == False:
+            #                 map[nei] = True
+            #                 queue.append(nei)
+            #         x += 1
+            #     map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
+            #     output = data[imin-1: imax+2, jmin-1:jmax+2]*map
+            #     np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
+            #     if createPictures:
+            #         plt.pcolormesh(output)
+            #         plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
+            #         plt.close()
 
 
