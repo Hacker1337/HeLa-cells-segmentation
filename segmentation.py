@@ -45,8 +45,34 @@ def untilt(massive, ground, error):
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
+def width(massive):
+    y, x = np.histogram(data.ravel(), bins=500)
+    x = x[:-1]
 
-pathes = [("data/foto/1_1 А контроль АЛА 75мВт", "result/foto/1_1 А контроль АЛА 75мВт")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+    plt.bar(x, y, x[1] - x[0])
+
+    popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
+
+    plt.plot(x, bell(x, *popt), 'g')
+    ##
+    ymax = y.max()
+    y = y / y.max()
+    centerVal = x[y.argmax()]
+    x = x - centerVal
+    popt, pcov = curve_fit(bellFixed, x, y)
+    ##
+    plt.plot(x+centerVal, ymax*bellFixed(x, *popt), 'r')
+    plt.legend(["experim", "free", "fixed"])
+    plt.show()
+    plt.close()
+
+
+    return popt[0]
+
+
+
+# pathes = [("data/foto/1_1 А контроль АЛА 75мВт", "result/foto/1_1 А контроль АЛА 75мВт")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [("data/cellsEasy", "result/foto/1_1 А контроль АЛА 75мВт")]
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -59,19 +85,27 @@ for dir, outdir in pathes:
     files = os.listdir(dir)
 
     for f in natsorted(files):
-        if f[-4:] == '.txt':
+        if f[-4:] == '.txt'and (0 or f[:-4] == '4'):
             name = f[:-4]
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
-            ##
+            data0 = data
+            results = np.zeros((2, 9))
+            ## begin fixed
             data = untilt(data, 0, 100)
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
+
+            y = y / y.max()
+            centerVal = x[y.argmax()]
+            x = x - centerVal
+            popt, pcov = curve_fit(bellFixed, x, y)
+            error = abs(popt[0])*1.9 + 0.14
             counter = 0
-            while counter == 0 or (counter < 3):
-                # print("Step", counter, 'popt', popt)
+            results[0, counter] = width(data)
+            while counter == 0 or (counter < 8):
                 data = untilt(data, centerVal, abs(popt[0])*1.9 + 0.14)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
@@ -80,24 +114,32 @@ for dir, outdir in pathes:
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
                 counter += 1
-            # print("Step", counter, 'popt', popt)
+                results[0, counter] = width(data)
             bordDiff = max(-3 * abs(popt[0]) + centerVal, -1)
-            ##
+            ## end fixed
+            data = data0
+            ##begin free
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
             popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
-
             counter = 0
-            while counter == 0 or (counter < 6):
-                # print("Step", counter, 'popt', popt)
+            results[1, counter] = width(data)
+            while counter == 0 or (counter < 8):
                 data = untilt(data, popt[0], abs(popt[1]) * 2 + 0.3)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
                 counter += 1
-            # print("Step", counter, 'popt', popt)
+                results[1, counter] = width(data)
             bordDiff = max(-3 * abs(popt[0]) + popt[1], -1)
-            ##
+            ##end free
+            plt.plot(results[0])
+            plt.plot(results[1])
+            plt.legend(["fixed", "free"])
+            plt.show()
+            plt.close()
+
+            continue
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
