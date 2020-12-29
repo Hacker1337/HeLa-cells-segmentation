@@ -37,7 +37,7 @@ def flat(x, a, b, c):
     return x[1]*a + x[0]*b + c
 
 
-def untilt(massive, ground, error):
+def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
     mask = np.abs(massive - ground) < error
     XY = np.array(np.where(mask))
     Z = massive[mask]
