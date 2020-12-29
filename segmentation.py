@@ -49,11 +49,11 @@ def width(massive: np.array) -> float:
     y, x = np.histogram(massive.ravel(), bins=500)
     x = x[:-1]
 
-    plt.bar(x, y, x[1] - x[0])
+    # plt.bar(x, y, x[1] - x[0])
 
     popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
 
-    plt.plot(x, bell(x, *popt), 'g')
+    # plt.plot(x, bell(x, *popt), 'g')
     ##
     ymax = y.max()
     y = y / y.max()
@@ -61,13 +61,13 @@ def width(massive: np.array) -> float:
     x = x - centerVal
     popt1, pcov = curve_fit(bellFixed, x, y)
     ##
-    plt.plot(x+centerVal, ymax*bellFixed(x, *popt1), 'r')
-    plt.legend(["free", "fixed", "experim"])
-    plt.show()
-    plt.close()
+    # plt.plot(x+centerVal, ymax*bellFixed(x, *popt1), 'r')
+    # plt.legend(["free", "fixed", "experim"])
+    # plt.show()
+    # plt.close()
 
 
-    return popt1[0]
+    return abs(popt1[0])
 
 
 
@@ -85,16 +85,13 @@ for dir, outdir in pathes:
     files = os.listdir(dir)
 
     for f in natsorted(files):
-        if f[-4:] == '.txt'and (0 or f[:-4] == '4'):
+        if f[-4:] == '.txt'and (1 or f[:-4] == '19'):
             name = f[:-4]
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
-            data0 = data
-            results = np.zeros((2, 9))
             ## begin fixed
-            # data = untilt(data, 0, 100)
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
 
@@ -102,44 +99,51 @@ for dir, outdir in pathes:
             centerVal = x[y.argmax()]
             x = x - centerVal
             popt, pcov = curve_fit(bellFixed, x, y)
-            error = abs(popt[0])*1.9 + 0.14
             counter = 0
-            results[0, counter] = width(data)
-            while counter == 0 or (counter < 8):
-                data = untilt(data, centerVal, abs(popt[0])*2 + 0.3)
+            wid = popt[0]
+
+            minWidth = wid
+            minCent = centerVal
+            bestUntilt = data
+            widthes = [wid]
+            while counter == 0 or (counter < 5):
+                data = untilt(data, centerVal, abs(popt[0]))
+
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 y = y / y.max()
                 centerVal = x[y.argmax()]
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
+                wid = popt[0]
+                widthes.append(wid)
+                if widthes[-1] < minWidth:
+                    minWidth = widthes[-1]
+                    minCent = centerVal
+                    bestUntilt = data
                 counter += 1
-                results[0, counter] = width(data)
-            bordDiff = max(-3 * abs(popt[0]) + centerVal, -1)
-            ## end fixed
-            data = data0
-            ##begin free
-            y, x = np.histogram(data.ravel(), bins=500)
-            x = x[:-1]
-            popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
-            counter = 0
-            results[1, counter] = width(data)
-            while counter == 0 or (counter < 8):
-                data = untilt(data, popt[1], abs(popt[0]) * 2 + 0.3)
-                y, x = np.histogram(data.ravel(), bins=500)
-                x = x[:-1]
-                popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
-                counter += 1
-                results[1, counter] = width(data)
-            bordDiff = max(-3 * abs(popt[0]) + popt[1], -1)
-            ##end free
-            plt.plot(results[0])
-            plt.plot(results[1])
-            plt.legend(["fixed", "free"])
-            plt.show()
-            plt.close()
 
-            continue
+            data = bestUntilt
+            bordDiff = min(-3 * abs(minWidth) + minCent, -0.9)
+            # plt.plot(widthes, 'o')
+            # plt.title(f"file {name}, beg width = {widthes[0]}")
+            # plt.show()
+
+            # plt.figure(figsize=(10, 10))
+            # plt.subplot(3, 3, 1)
+            # plt.pcolormesh(data)
+            # plt.suptitle(f"Data {name}, width={minWidth}")
+            # for j in range(3):
+            #     plt.subplot(3, 3, 2+j)
+            #     plt.pcolormesh(data < -0.8-j*0.2)
+            #     plt.title(-0.8-j*0.2)
+            # for j in range(5):
+            #     plt.subplot(3, 3, j+5)
+            #     plt.pcolormesh(data < minCent-minWidth*(2.7+0.1*j))
+            #     plt.title((2.7+0.1*j))
+            # plt.show()
+            # plt.close()
+
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -273,9 +277,9 @@ for dir, outdir in pathes:
             # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
             if createPictures:
                 plt.pcolormesh(used)
-                plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloringOldRev.png'), dpi=300)
-                # plt.show()
+                plt.title(name+"goldMid")
+                plt.savefig(os.path.join(outdir, f'{name}coloringGoldMiddle.png'), dpi=300)
+                plt.show()
                 plt.close()
 
             "Выделение рамок для клеток и их печать"
