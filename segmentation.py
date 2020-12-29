@@ -63,7 +63,6 @@ for dir, outdir in pathes:
             print("Working with file", f)
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
-            data = untilt(data, 0, 100)
 
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
@@ -72,22 +71,34 @@ for dir, outdir in pathes:
             centerVal = x[y.argmax()]
             x = x - centerVal
             popt, pcov = curve_fit(bellFixed, x, y)
-            error = abs(popt[0])*1.9 + 0.14
             counter = 0
-            while counter == 0 or (counter < 3):
-                # print("Step", counter, 'popt', popt)
-                data = untilt(data, centerVal, abs(popt[0])*1.9 + 0.14)
+            wid = popt[0]
+
+            minWidth = wid
+            minCent = centerVal
+            bestUntilt = data
+            widthes = [wid]
+            while counter == 0 or (counter < 5):
+                data = untilt(data, centerVal, abs(popt[0]))
+
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 y = y / y.max()
                 centerVal = x[y.argmax()]
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
+                wid = popt[0]
+                widthes.append(wid)
+                if widthes[-1] < minWidth:
+                    minWidth = widthes[-1]
+                    minCent = centerVal
+                    bestUntilt = data
                 counter += 1
 
-            # print("Step", counter, 'popt', popt)
+            data = bestUntilt
+            bordDiff = min(-3 * abs(minWidth) + minCent, -0.9)
 
-            bordDiff = max(-3 * abs(popt[0]) + centerVal, -1)
+
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -222,7 +233,7 @@ for dir, outdir in pathes:
             if createPictures:
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring3.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloring.png'), dpi=300)
                 # plt.show()
                 plt.close()
 
