@@ -37,7 +37,7 @@ def flat(x, a, b, c):
     return x[1]*a + x[0]*b + c
 
 
-def untilt(massive, ground, error):
+def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
     mask = np.abs(massive - ground) < error
     XY = np.array(np.where(mask))
     Z = massive[mask]
@@ -45,8 +45,8 @@ def untilt(massive, ground, error):
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
-def width(massive):
-    y, x = np.histogram(data.ravel(), bins=500)
+def width(massive: np.array) -> float:
+    y, x = np.histogram(massive.ravel(), bins=500)
     x = x[:-1]
 
     plt.bar(x, y, x[1] - x[0])
@@ -59,15 +59,15 @@ def width(massive):
     y = y / y.max()
     centerVal = x[y.argmax()]
     x = x - centerVal
-    popt, pcov = curve_fit(bellFixed, x, y)
+    popt1, pcov = curve_fit(bellFixed, x, y)
     ##
-    plt.plot(x+centerVal, ymax*bellFixed(x, *popt), 'r')
-    plt.legend(["experim", "free", "fixed"])
+    plt.plot(x+centerVal, ymax*bellFixed(x, *popt1), 'r')
+    plt.legend(["free", "fixed", "experim"])
     plt.show()
     plt.close()
 
 
-    return popt[0]
+    return popt1[0]
 
 
 
@@ -94,7 +94,7 @@ for dir, outdir in pathes:
             data0 = data
             results = np.zeros((2, 9))
             ## begin fixed
-            data = untilt(data, 0, 100)
+            # data = untilt(data, 0, 100)
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
 
@@ -106,7 +106,7 @@ for dir, outdir in pathes:
             counter = 0
             results[0, counter] = width(data)
             while counter == 0 or (counter < 8):
-                data = untilt(data, centerVal, abs(popt[0])*1.9 + 0.14)
+                data = untilt(data, centerVal, abs(popt[0])*2 + 0.3)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 y = y / y.max()
@@ -125,7 +125,7 @@ for dir, outdir in pathes:
             counter = 0
             results[1, counter] = width(data)
             while counter == 0 or (counter < 8):
-                data = untilt(data, popt[0], abs(popt[1]) * 2 + 0.3)
+                data = untilt(data, popt[1], abs(popt[0]) * 2 + 0.3)
                 y, x = np.histogram(data.ravel(), bins=500)
                 x = x[:-1]
                 popt, pcov = curve_fit(bell, x, y, p0=[1, 0.1, 1000])
