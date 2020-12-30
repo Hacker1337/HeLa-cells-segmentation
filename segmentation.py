@@ -117,9 +117,8 @@ for dir, outdir in pathes:
                 counter += 1
 
             data = bestUntilt
-            bordDiff = min(-3 * abs(minWidth) + minCent, -0.6)
-
-
+            data -= minCent
+            bordDiff = max(-3 * abs(minWidth), -0.4)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
