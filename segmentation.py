@@ -45,7 +45,28 @@ def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
-pathes = [("Fixed Cells", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes = [("data/foto", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
+pathes =[
+    ('data/foto/1_1 А контроль АЛА 75мВт', 'result/foto/1_1 А контроль АЛА 75мВт'),
+    # ('data/foto/1_1 А контроль АЛА 75мВт (2)', 'result/foto/1_1 А контроль АЛА 75мВт (2)'),
+    # ('data/foto/3_1 В 3мВт', 'result/foto/3_1 В 3мВт'),
+    # ('data/foto/3_1 В 3мВт (2)', 'result/foto/3_1 В 3мВт (2)'),
+    # ('data/foto/3_2 В 5мВт', 'result/foto/3_2 В 5мВт'),
+    # ('data/foto/3_2 В 5мВт (2)', 'result/foto/3_2 В 5мВт (2)'),
+    # ('data/foto/9. 15мВт', 'result/foto/9. 15мВт'),
+    # ('data/foto/9. 15мВт (2)', 'result/foto/9. 15мВт (2)'),
+    # ('data/foto/10. 10мВт', 'result/foto/10. 10мВт'),
+    # ('data/foto/10. 10мВт (2)', 'result/foto/10. 10мВт (2)'),
+    # ('data/foto/11. 25мВт', 'result/foto/11. 25мВт'),
+    # ('data/foto/11. 25мВт (2)', 'result/foto/11. 25мВт (2)'),
+    # ('data/foto/12. 50мВт', 'result/foto/12. 50мВт'),
+    # ('data/foto/12. 50мВт (2)', 'result/foto/12. 50мВт (2)'),
+    # ('data/foto/17. контроль АЛА+', 'result/foto/17. контроль АЛА+'),
+    # ('data/foto/17. контроль АЛА+ (2)', 'result/foto/17. контроль АЛА+ (2)'),
+    # ('data/foto/19. контроль АЛА -', 'result/foto/19. контроль АЛА -'),
+    # ('data/foto/19. контроль АЛА - (2)', 'result/foto/19. контроль АЛА - (2)')
+     ]
+
 minSpaceWithBorders = 1000
 minSpaceCentre = 1000
 createPictures = True
@@ -96,7 +117,7 @@ for dir, outdir in pathes:
                 counter += 1
 
             data = bestUntilt
-            bordDiff = min(-3 * abs(minWidth) + minCent, -0.9)
+            bordDiff = min(-3 * abs(minWidth) + minCent, -0.6)
 
 
             c = 1
