@@ -45,27 +45,9 @@ def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
-pathes = [("data/foto", "result/Fixed")]       # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
-pathes =[
-    ('data/foto/1_1 А контроль АЛА 75мВт', 'result/foto/1_1 А контроль АЛА 75мВт'),
-    # ('data/foto/1_1 А контроль АЛА 75мВт (2)', 'result/foto/1_1 А контроль АЛА 75мВт (2)'),
-    # ('data/foto/3_1 В 3мВт', 'result/foto/3_1 В 3мВт'),
-    # ('data/foto/3_1 В 3мВт (2)', 'result/foto/3_1 В 3мВт (2)'),
-    # ('data/foto/3_2 В 5мВт', 'result/foto/3_2 В 5мВт'),
-    # ('data/foto/3_2 В 5мВт (2)', 'result/foto/3_2 В 5мВт (2)'),
-    # ('data/foto/9. 15мВт', 'result/foto/9. 15мВт'),
-    # ('data/foto/9. 15мВт (2)', 'result/foto/9. 15мВт (2)'),
-    # ('data/foto/10. 10мВт', 'result/foto/10. 10мВт'),
-    # ('data/foto/10. 10мВт (2)', 'result/foto/10. 10мВт (2)'),
-    # ('data/foto/11. 25мВт', 'result/foto/11. 25мВт'),
-    # ('data/foto/11. 25мВт (2)', 'result/foto/11. 25мВт (2)'),
-    # ('data/foto/12. 50мВт', 'result/foto/12. 50мВт'),
-    # ('data/foto/12. 50мВт (2)', 'result/foto/12. 50мВт (2)'),
-    # ('data/foto/17. контроль АЛА+', 'result/foto/17. контроль АЛА+'),
-    # ('data/foto/17. контроль АЛА+ (2)', 'result/foto/17. контроль АЛА+ (2)'),
-    # ('data/foto/19. контроль АЛА -', 'result/foto/19. контроль АЛА -'),
-    # ('data/foto/19. контроль АЛА - (2)', 'result/foto/19. контроль АЛА - (2)')
-     ]
+pathfile = "segmentation.path"
+file = open(pathfile, encoding='utf-8')
+pathes = [i.split('\t') for i in file.read().split('\n')]
 
 minSpaceWithBorders = 2000
 minSpaceCentre = 1000
@@ -73,7 +55,7 @@ createPictures = True
 
 
 for dir, outdir in pathes:
-    print("New path:", dir)
+    print("New path:", dir, "\nWorking with file ")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     files = os.listdir(dir)
@@ -81,7 +63,7 @@ for dir, outdir in pathes:
     for f in natsorted(files):
         if f[-4:] == '.txt':
             name = f[:-4]
-            print("Working with file", f)
+            print(f, end=' ')
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
@@ -98,7 +80,6 @@ for dir, outdir in pathes:
             minWidth = wid
             minCent = centerVal
             bestUntilt = data
-            widthes = [wid]
             while counter == 0 or (counter < 5):
                 data = untilt(data, centerVal, abs(popt[0]))
 
@@ -109,9 +90,8 @@ for dir, outdir in pathes:
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
                 wid = abs(popt[0])
-                widthes.append(wid)
-                if widthes[-1] < minWidth:
-                    minWidth = widthes[-1]
+                if wid < minWidth:
+                    minWidth = wid
                     minCent = centerVal
                     bestUntilt = data
                 counter += 1
