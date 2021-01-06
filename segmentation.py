@@ -80,7 +80,6 @@ for dir, outdir in pathes:
             minWidth = wid
             minCent = centerVal
             bestUntilt = data
-            widthes = [wid]
             while counter == 0 or (counter < 5):
                 data = untilt(data, centerVal, abs(popt[0]))
 
@@ -91,9 +90,8 @@ for dir, outdir in pathes:
                 x = x - centerVal
                 popt, pcov = curve_fit(bellFixed, x, y)
                 wid = abs(popt[0])
-                widthes.append(wid)
-                if widthes[-1] < minWidth:
-                    minWidth = widthes[-1]
+                if wid < minWidth:
+                    minWidth = wid
                     minCent = centerVal
                     bestUntilt = data
                 counter += 1
