@@ -14,7 +14,7 @@ def bell(x, period, centre, maximum):
 pathes = [('result/apoptose', "analys/apoptose")]
 pathfile = "cellAnalys.path"
 file = open(pathfile, encoding='utf-8')
-pathes = [i.split('\t') for i in file.read().split('\n')]
+pathes = [i.split('\t') for i in file.read().strip().split('\n')]
 # createPictures = True
 
 alpha = 0.19  # in mkm^3/pg == ml/g

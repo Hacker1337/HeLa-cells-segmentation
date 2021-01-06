@@ -11,7 +11,7 @@ def bell(x, period, centre, maximum):
 
 pathfile = "analysVis.path"
 file = open(pathfile, encoding='utf-8')
-pathes = file.read().split('\n')
+pathes = file.read().strip().split('\n')
 # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 # pathes = ["analys/Many", "analys/Easy", "analys/Medium"]
 
