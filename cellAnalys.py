@@ -84,7 +84,7 @@ for dir, outdir in pathes:
 
     deltaN = sum(vol)/len(vol)/vaim
     print("\ncells refractive index =", backN + deltaN)
-    f = open("refractiveIndex.txt", "wa")
+    f = open("refractiveIndex.txt", "a")
     print(dir + " cells refractive index =", backN + deltaN, file=f)
     f.close()
     realV = [x/deltaN for x in vol]
