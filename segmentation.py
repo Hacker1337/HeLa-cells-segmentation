@@ -47,7 +47,7 @@ def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
 
 pathfile = "segmentation.path"
 file = open(pathfile, encoding='utf-8')
-pathes = [i.split('\t') for i in file.read().split('\n')]
+pathes = [i.split('\t') for i in file.read().strip().split('\n')]
 
 minSpaceWithBorders = 2000
 minSpaceCentre = 1000
