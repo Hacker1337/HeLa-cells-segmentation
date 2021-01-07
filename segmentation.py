@@ -67,6 +67,7 @@ for dir, outdir in pathes:
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
+            "Выравнивание фона"
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
 
