@@ -49,7 +49,7 @@ pathfile = "segmentation.path"
 file = open(pathfile, encoding='utf-8')
 pathes = [i.split('\t') for i in file.read().strip().split('\n')]
 
-minSpaceWithBorders = 2000
+minSpaceWithBorders = 2000  # never used actually, instead I use 3*minSpaceCentre
 minSpaceCentre = 1000
 createPictures = True
 
@@ -109,7 +109,7 @@ for dir, outdir in pathes:
             "Нахождение больших кучностей клеток"
             for i in range(data.shape[0]):
                 for j in range(data.shape[1]):
-                    if data[i, j] < bordDiff and used[i, j] == 0:
+                    if data[i, j] < bordDiff and (used[i, j] == 0 or used[i, j] == -1):
                         used[i, j] = c
                         queue = [(i, j)]
                         cells.append(0)
@@ -128,7 +128,7 @@ for dir, outdir in pathes:
                             x += 1
 
                         if cells[-1] < minSpaceCentre*3:
-                            used[used == c] = -1
+                            used[used == c] = -2
                             cells.pop()
                             continue
                         cells.pop()
@@ -198,7 +198,8 @@ for dir, outdir in pathes:
                                 x += 1
                         if len(bodies) == 0:
                             for I, J in queue:
-                                used[I, J] = -1
+                                used[I, J] = -2         # никогда не воспользуемся
+
 
             used[used == -1] = 0
 
@@ -236,39 +237,39 @@ for dir, outdir in pathes:
             if createPictures:
                 plt.pcolormesh(used)
                 plt.title(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloringDown1.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloringDown2.png'), dpi=300)
                 plt.show()
                 plt.close()
-            #
-            # "Выделение рамок для клеток и их печать"
-            # outPlace = os.path.join(outdir, name)
-            # if not os.path.exists(outPlace):
-            #     os.makedirs(outPlace)
-            #
-            # for cell in range(c-1):
-            #     maski, maskj = np.where(used == cell+1)
-            #     imin, imax = maski.min(), maski.max()
-            #     jmin, jmax = maskj.min(), maskj.max()
-            #     if imin == 0 or jmin == 0 or imax == used.shape[0] - 1 or jmax == used.shape[1] - 1:
-            #         # клетка около границы
-            #         continue
-            #     map = used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1
-            #     queue = [(0, 0)]
-            #
-            #     x = 0
-            #     while x < len(queue):
-            #         map[0, 0] = True
-            #         for nei in near(*queue[x], *map.shape):
-            #             if map[nei] == False:
-            #                 map[nei] = True
-            #                 queue.append(nei)
-            #         x += 1
-            #     map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
-            #     output = data[imin-1: imax+2, jmin-1:jmax+2]*map
-            #     np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
-            #     if createPictures:
-            #         plt.pcolormesh(output)
-            #         plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
-            #         plt.close()
-            #
+
+            "Выделение рамок для клеток и их печать"
+            outPlace = os.path.join(outdir, name)
+            if not os.path.exists(outPlace):
+                os.makedirs(outPlace)
+
+            for cell in range(c-1):
+                maski, maskj = np.where(used == cell+1)
+                imin, imax = maski.min(), maski.max()
+                jmin, jmax = maskj.min(), maskj.max()
+                if imin == 0 or jmin == 0 or imax == used.shape[0] - 1 or jmax == used.shape[1] - 1:
+                    # клетка около границы
+                    continue
+                map = used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1
+                queue = [(0, 0)]
+
+                x = 0
+                while x < len(queue):
+                    map[0, 0] = True
+                    for nei in near(*queue[x], *map.shape):
+                        if map[nei] == False:
+                            map[nei] = True
+                            queue.append(nei)
+                    x += 1
+                map = np.bitwise_or((np.bitwise_not(map)), used[imin-1: imax+2, jmin-1:jmax+2] == cell + 1)      # включение внутренних пустот
+                output = data[imin-1: imax+2, jmin-1:jmax+2]*map
+                np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
+                if createPictures:
+                    plt.pcolormesh(output)
+                    plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
+                    plt.close()
+
 
