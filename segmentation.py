@@ -67,6 +67,7 @@ for dir, outdir in pathes:
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
+            "Выравнивание фона"
             y, x = np.histogram(data.ravel(), bins=500)
             x = x[:-1]
 
@@ -119,6 +120,7 @@ for dir, outdir in pathes:
                             for nei in near(*queue[x], data.shape[0], data.shape[1]):
                                 if data[nei] < bordDiff and used[nei] != c:
                                     if used[nei] != 0:
+                                        continue
                                         print("Я сломался", nei)
                                         # exit(1)
                                     used[nei] = c
@@ -189,7 +191,7 @@ for dir, outdir in pathes:
                                         # if (used[nei] != 0 and
                                         #         distance(used[nei], *nei) < distance(subc, *nei)):
                                         #     continue
-                                        if used[nei] != 0 and data[nei] < data[queue[x]]:
+                                        if data[nei] < data[queue[x]]:
                                             continue
                                         used[nei] = subc
                                         queue.append(nei)
