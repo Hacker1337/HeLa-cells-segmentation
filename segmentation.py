@@ -55,7 +55,7 @@ createPictures = True
 
 
 for dir, outdir in pathes:
-    print("New path:", dir, "\nWorking with file ")
+    print("\nNew path:", dir, "\nWorking with file ")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     files = os.listdir(dir)
@@ -235,10 +235,14 @@ for dir, outdir in pathes:
 
             # np.savetxt(os.path.join(outdir, f'{name}coloring.txt'), used)
             if createPictures:
+                plt.figure(figsize=(12, 5))
+                plt.subplot(1, 2, 1)
+                plt.pcolormesh(data)
+                plt.subplot(1, 2, 2)
                 plt.pcolormesh(used)
-                plt.title(name)
+                plt.suptitle(name)
                 plt.savefig(os.path.join(outdir, f'{name}coloringDown2.png'), dpi=300)
-                plt.show()
+                # plt.show()        # лучше не надо, память закончится
                 plt.close()
 
             "Выделение рамок для клеток и их печать"
