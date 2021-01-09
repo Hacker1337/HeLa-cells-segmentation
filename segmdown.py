@@ -49,7 +49,7 @@ pathfile = "segmentation.path"
 file = open(pathfile, encoding='utf-8')
 pathes = [i.split('\t') for i in file.read().strip().split('\n')]
 
-minSpaceWithBorders = 1000
+minSpaceWithBorders = 2000  # never used actually, instead I use 3*minSpaceCentre
 minSpaceCentre = 1000
 createPictures = True
 
@@ -109,7 +109,7 @@ for dir, outdir in pathes:
             "Нахождение больших кучностей клеток"
             for i in range(data.shape[0]):
                 for j in range(data.shape[1]):
-                    if data[i, j] < bordDiff and used[i, j] == 0:
+                    if data[i, j] < bordDiff and (used[i, j] == 0 or used[i, j] == -1):
                         used[i, j] = c
                         queue = [(i, j)]
                         cells.append(0)
@@ -120,6 +120,7 @@ for dir, outdir in pathes:
                             for nei in near(*queue[x], data.shape[0], data.shape[1]):
                                 if data[nei] < bordDiff and used[nei] != c:
                                     if used[nei] != 0:
+                                        continue
                                         print("Я сломался", nei)
                                         # exit(1)
                                     used[nei] = c
@@ -127,7 +128,7 @@ for dir, outdir in pathes:
                             x += 1
 
                         if cells[-1] < minSpaceCentre*3:
-                            used[used == c] = -1
+                            used[used == c] = -2
                             cells.pop()
                             continue
                         cells.pop()
@@ -143,12 +144,12 @@ for dir, outdir in pathes:
                             k += 1
                         centDiff = x[k]
                         used[used == c] = 0
-                        borders = []
+                        bodies = []
 
                         "Нахождение центров в куче"
                         for I, J in queue:
                             if data[I, J] < centDiff and used[I, J] == 0:
-                                borders.append([])
+                                bodies.append([])
                                 used[I, J] = c
                                 subqueue = [(I, J)]
                                 cells.append(0)
@@ -157,8 +158,8 @@ for dir, outdir in pathes:
                                 while x < len(subqueue):
                                     cents[-1][0] += subqueue[x][1]
                                     cents[-1][1] += subqueue[x][0]
-                                    if otherNum(*subqueue[x], centDiff, *data.shape) > 0:  # клетка на границе
-                                        borders[-1].append(subqueue[x])
+                                    # if otherNum(*subqueue[x], centDiff, *data.shape) > 0:  # клетка на границе
+                                    bodies[-1].append(subqueue[x])
                                     cells[-1] += 1
                                     for nei in near(*subqueue[x], *data.shape):
                                         if data[nei] < centDiff and used[nei] != c:
@@ -171,7 +172,7 @@ for dir, outdir in pathes:
 
                                 if cells[-1] < minSpaceCentre:
                                     used[used == c] = -1
-                                    borders.pop()
+                                    bodies.pop()
                                     cells.pop()
                                     cents.pop()
                                 else:
@@ -180,28 +181,30 @@ for dir, outdir in pathes:
                                     c += 1
                         used[used == -1] = 0
                         "Расширение границ центров из кучи"
-                        for k in range(len(borders)):
-                            subc = k + c - len(borders)
-                            queue = borders[k]
+                        for k in range(len(bodies)):
+                            subc = k + c - len(bodies)
+                            queue = bodies[k]
                             x = 0
                             while x < len(queue):
                                 for nei in near(*queue[x], *data.shape):
                                     if data[nei] < bordDiff and used[nei] != subc:
-                                        if (used[nei] != 0 and
-                                                distance(used[nei], *nei) < distance(subc, *nei)):
+                                        # if (used[nei] != 0 and
+                                        #         distance(used[nei], *nei) < distance(subc, *nei)):
+                                        #     continue
+                                        if data[nei] < data[queue[x]]:
                                             continue
-
                                         used[nei] = subc
                                         queue.append(nei)
                                 x += 1
-                        if len(borders) == 0:
+                        if len(bodies) == 0:
                             for I, J in queue:
-                                used[I, J] = -1
+                                used[I, J] = -2         # никогда не воспользуемся
+
 
             used[used == -1] = 0
 
             "Возвращение отрезанных кусков"
-            pieces = []     # [cell number, queue, set(neibours)]
+            pieces = []     # [cell number, queue, set(neighbours)]
             merged = np.zeros_like(used, dtype=bool)
             for i in range(data.shape[0]):
                 for j in range(data.shape[1]):
@@ -238,7 +241,7 @@ for dir, outdir in pathes:
                 plt.subplot(1, 2, 2)
                 plt.pcolormesh(used)
                 plt.suptitle(name)
-                plt.savefig(os.path.join(outdir, f'{name}coloring.png'), dpi=300)
+                plt.savefig(os.path.join(outdir, f'{name}coloringDown2.png'), dpi=300)
                 # plt.show()        # лучше не надо, память закончится
                 plt.close()
 
@@ -270,7 +273,6 @@ for dir, outdir in pathes:
                 np.savetxt(os.path.join(outPlace, str(cell) + '.txt'), output)
                 if createPictures:
                     plt.pcolormesh(output)
-                    plt.colorbar()
                     plt.savefig(os.path.join(outPlace, f'im{cell}.png'))
                     plt.close()
 
