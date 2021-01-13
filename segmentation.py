@@ -99,7 +99,7 @@ for dir, outdir in pathes:
 
             data = bestUntilt
             data -= minCent
-            bordDiff = max(-3 * abs(minWidth), -0.4)
+            bordDiff = max(-2 * abs(minWidth), -10)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
@@ -125,9 +125,22 @@ for dir, outdir in pathes:
                                     used[nei] = c
                                     queue.append(nei)
                             x += 1
+                        # if cells[-1] >= 500:
+                        #     plt.figure(figsize=(12, 5))
+                        #     plt.subplot(1, 2, 1)
+                        #     plt.pcolormesh(data)
+                        #     plt.subplot(1, 2, 2)
+                        #     plt.pcolormesh(used)
+                        #     plt.title(dir + " " + name)
+                        #     plt.show()
+
+                        if 6000 > cells[-1] > 1800:
+                            c += 1
+                            cents.append([0, 0])
+                            continue
 
                         if cells[-1] < minSpaceCentre*3:
-                            used[used == c] = -1
+                            used[used == c] = -2
                             cells.pop()
                             continue
                         cells.pop()
@@ -199,7 +212,7 @@ for dir, outdir in pathes:
                                 used[I, J] = -1
 
             used[used == -1] = 0
-
+            used[used == -2] = 0
             "Возвращение отрезанных кусков"
             pieces = []     # [cell number, queue, set(neibours)]
             merged = np.zeros_like(used, dtype=bool)
