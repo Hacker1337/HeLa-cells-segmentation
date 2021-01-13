@@ -99,7 +99,7 @@ for dir, outdir in pathes:
 
             data = bestUntilt
             data -= minCent
-            bordDiff = max(-2 * abs(minWidth), -10)
+            bordDiff = max(-1 * abs(minWidth), -10)
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
