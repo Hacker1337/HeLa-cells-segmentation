@@ -89,8 +89,8 @@ for dir, outdir in pathes:
     realV = [x/deltaN for x in vol]
     output = pd.DataFrame(
         {"M, pg": M, "av surface density, pg/mkm^2": avSurfDens, "av phase profile, rad": avPhaseProfile,
-         "V_ϕ, mkm^3": vol,"realVolume, mkm^3": realV, "S_p, mkm^2": S, "SA, mkm^2": SA, "SAV, mkm^-1": SAV, "SDM, mkm^2/pg": SDM, "PAR, mkm^-1": PAR, "ψ": ψ,
-         "σ, mkm^2": σ, "Kurtosis": Kurtosis, "Skewness": Skewness, "ε": ε, "name": name})
+         "V_phi, mkm^3": vol,"realVolume, mkm^3": realV, "S_p, mkm^2": S, "SA, mkm^2": SA, "SAV, mkm^-1": SAV, "SDM, mkm^2/pg": SDM, "PAR, mkm^-1": PAR, "psi": ψ,
+         "sigma, mkm^2": σ, "Kurtosis": Kurtosis, "Skewness": Skewness, "epsilon": ε, "name": name})
     output.to_csv(os.path.join(outdir, "table1.csv"))
 
     # for col in output:
