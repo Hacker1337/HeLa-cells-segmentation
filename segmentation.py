@@ -75,7 +75,7 @@ for dir, outdir in pathes:
             y = y / y.max()
             centerVal = x[y.argmax()]
             x = x - centerVal
-            popt, pcov = curve_fit(bellFixed, x, y)
+            popt, pcov = curve_fit(bellFixed, x, y, p0=[0.1])
             counter = 0
             wid = abs(popt[0])
 
@@ -90,7 +90,7 @@ for dir, outdir in pathes:
                 y = y / y.max()
                 centerVal = x[y.argmax()]
                 x = x - centerVal
-                popt, pcov = curve_fit(bellFixed, x, y)
+                popt, pcov = curve_fit(bellFixed, x, y, p0=[0.1])
                 wid = abs(popt[0])
                 if wid < minWidth:
                     minWidth = wid
