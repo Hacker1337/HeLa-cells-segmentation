@@ -45,14 +45,15 @@ def untilt(massive: np.ndarray, ground: float, error: float) -> np.ndarray:
     return massive - flat(np.array(np.meshgrid(np.arange(massive.shape[1]), np.arange(massive.shape[0]))[::-1]), *popt)
 
 
-pathfile = "segmentation.path"
+pathfile = "segmentation.path"      # в этот файл нужно записывать строчки формата: папка с данными tab папка назначения
 file = open(pathfile, encoding='utf-8')
 pathes = [i.split('\t') for i in file.read().strip().split('\n')]
+# или просто [("data/foto/12. 50мВт", "result/smallSpace3foto/12. 50мВт")]
 
-minSpaceWithBorders = 1000
-minSpaceCentre = 1000
+minSpaceCentre = 1000   # ограничение на размер 1/3 от клетки (чтобы маленький мусор отбросить)
 createPictures = True
 
+minSpaceWithBorders = minSpaceCentre
 
 for dir, outdir in pathes:
     print("\nNew path:", dir, "\nWorking with file ")
@@ -100,6 +101,17 @@ for dir, outdir in pathes:
             data = bestUntilt
             data -= minCent
             bordDiff = max(-3 * abs(minWidth), -0.4)
+            '''
+            Вот здесь самая важная настройка. bordDiff - число, определяющее границу между клеткой и фоном.
+            Все, что меньше bordDiff рассматривается, как часть клетки. Потом если область слишком маленькая,
+            с ней ничего не происходит. Иначе программа думает сколько клеток в этой области и вырезает их.
+            minWidth - характерная ширина распределения значений в фоне 
+            (фон аппроксимируется функцией e^(-(x/minWidth)^2)). Иногда клетки занимают почти весь кадр, тогда 
+            аппроксимация дает что-то странное. Для этого нужно ограничение на bordDiff (-0.4 в случае с маленькими 
+            клетками).
+            Соответственно нужно подбирать коэффициент перед bordDiff. Для этого есть переделанная версия программы, 
+            которая пробует разные значения этого коэффициента и визуализирует результат сегментации.
+            '''
             c = 1
             used = np.zeros_like(data, dtype="int64")
 
