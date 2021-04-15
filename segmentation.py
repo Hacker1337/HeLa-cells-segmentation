@@ -52,6 +52,7 @@ pathes = [i.split('\t') for i in file.read().strip().split('\n')]
 
 minSpaceCentre = 1000   # ограничение на размер 1/3 от клетки (чтобы маленький мусор отбросить)
 createPictures = True
+redo = False
 
 minSpaceWithBorders = minSpaceCentre
 
@@ -64,6 +65,8 @@ for dir, outdir in pathes:
     for f in natsorted(files):
         if f[-4:] == '.txt':
             name = f[:-4]
+            if not redo and os.path.exists(os.path.join(outdir, f'{name}coloring.png')):
+                continue
             print(f, end=' ')
             data = np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
