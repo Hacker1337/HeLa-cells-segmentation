@@ -68,7 +68,7 @@ for dir, outdir in pathes:
             if not redo and os.path.exists(os.path.join(outdir, f'{name}coloring.png')):
                 continue
             print(f, end=' ')
-            data = np.loadtxt(os.path.join(dir, f))
+            data = -np.loadtxt(os.path.join(dir, f))
             data[np.isnan(data)] = 0
 
             "Выравнивание фона"
@@ -103,7 +103,7 @@ for dir, outdir in pathes:
 
             data = bestUntilt
             data -= minCent
-            bordDiff = max(-3 * abs(minWidth), -0.4)
+            bordDiff = max(-1.8 * abs(minWidth), -0.8)
             '''
             Вот здесь самая важная настройка. bordDiff - число, определяющее границу между клеткой и фоном.
             Все, что меньше bordDiff рассматривается, как часть клетки. Потом если область слишком маленькая,
