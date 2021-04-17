@@ -15,15 +15,25 @@ pathes = file.read().strip().split('\n')
 # Надо вписывать кортежи (папка с исходными данными, папка для вывода данных)
 # pathes = ["analys/Many", "analys/Easy", "analys/Medium"]
 
+outdir = 'analys/tables_2'
+
 for dir in pathes:
-    table = pd.read_csv(os.path.join(dir, 'table1.csv'),  index_col=0)
+    table = pd.DataFrame()
+    for subdir in os.listdir(dir):
+        if subdir.find('.') != -1:
+            continue
+        part = pd.read_csv(os.path.join(dir, subdir, 'table1.csv'), index_col=0)
+        table = pd.concat([table, part])
+    table.drop(['name'], axis=1, inplace=True)
+    # сделать здесь чтение подпапок и объединение
+
     for col in table:
         if table[col].dtype != 'O':
             y, x = np.histogram(table[col], bins=500)
             x = x[:-1]
             popt, conv = curve_fit(bell, x, y, p0=[table[col].mean(), table[col].mean() if col != 'Kurtosis' else 0, y.max()])
             table = table[abs(table[col]-popt[1]) < abs(popt[0])*4]
-    table.to_csv(os.path.join(dir, "tableFiltered.csv"))
+    table.to_csv(os.path.join(outdir, dir[dir.rfind('/')+1:]+".csv"))
 
     table.hist(figsize=(20, 20), bins=50)
     plt.savefig(os.path.join(dir, 'histsFiltered200.png'), dpi=300)
